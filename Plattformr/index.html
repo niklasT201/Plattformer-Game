@@ -10,14 +10,49 @@
             display: block;
             margin: 100px auto 0;
         }
+
+
+
+        .pause-menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -70%);
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 100px;
+            color: white;
+            display: none;
+        }
+
+        button {
+            background-color: white;
+            height: 40px;
+            width: 110px;
+            margin-top: 40px;
+        }
+
+
+          /* Style for only the "Next Level" button */
+          .pause-menu button:nth-child(4) {
+            margin-top: 10px; /* Adjust the margin-top to position the button lower */
+        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas" width="1000" height="600"></canvas>
+    <div class="pause-menu">
+        <h2 style="margin-left: 70px; margin-top: -50px; font-size:xx-large;">Paused</h2>
+        <button onclick="resumeGame()">Resume</button>
+        <button onclick="restartGame()">Restart</button>
+        <button onclick="levelGame()">Next Level</button>
+    </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        let gamePaused = false;
+        let completeLevel = false;
+        let levelNumber = 1;
 
         let player = {
             x: -500,
@@ -30,15 +65,24 @@
         };
 
         let goal = {
-            x: -300,
-            y: 500,
+            x: 3800,
+            y: 450,
             width: 50,
             height: 50,
+        };
+
+
+        let goal2 = {
+            x: 100,
+            y: 450,
+            width: 50,
+            height: 50, 
         };
 
         let platforms = [
             //Platform 1
             { x: -1500, y: canvas.height - 50, width: 2500, height: 700 },
+            { x: -600, y: canvas.height - 750, width: 10, height: 700 },
             { x: -160, y: canvas.height - 230, width: 100, height: 30 }, 
             { x: 50, y: canvas.height - 230, width: 100, height: 30 }, 
             { x: -60, y: canvas.height - 370, width: 100, height: 30 }, 
@@ -57,20 +101,76 @@
 
 
             //Platform 3
-            { x: 2200, y: canvas.height - 50, width: 1500, height: 700 }, 
+            { x: 2200, y: canvas.height - 50, width: 2600, height: 700 }, 
             { x: 2200, y: canvas.height - 300, width: 50, height: 250 },
+            { x: 2600, y: canvas.height - 200, width: 50, height: 150 },
+            { x: 2650, y: canvas.height - 110, width: 100, height: 70 },
+            { x: 4200, y: canvas.height - 750, width: 10, height: 700 },
         ];
 
+
+        let platforms2 = [
+            //Platform 1
+            { x: -1500, y: canvas.height - 50, width: 1500, height: 700 },
+            { x: -700, y: canvas.height - 750, width: 10, height: 700 },
+
+            { x: 375, y: canvas.height - 100, width: 75, height: 30 }, 
+            { x: 100, y: canvas.height - 230, width: 75, height: 30 }, 
+            { x: 300, y: canvas.height - 400, width: 75, height: 30 }, 
+
+            { x: 450, y: canvas.height - 500, width: 50, height: 450 },
+            { x: 450, y: canvas.height - 50, width: 50, height: 700 },
+            { x: 850, y: canvas.height - 350, width: 50, height: 300 },
+            { x: 850, y: canvas.height - 50, width: 50, height: 700 },
+            { x: 1100, y: canvas.height - 500, width: 50, height: 450 },
+            { x: 1100, y: canvas.height - 50, width: 50, height: 700 },
+      
+            { x: 1450, y: canvas.height - 600, width: 350, height: 700 },
+            { x: 1800, y: canvas.height - 350, width: 300, height: 450 },
+            { x: 2100, y: canvas.height - 600, width: 350, height: 700 },
+            { x: 2450, y: canvas.height - 350, width: 300, height: 450 },
+            { x: 2750, y: canvas.height - 600, width: 350, height: 700 },
+            { x: 3100, y: canvas.height - 350, width: 300, height: 450 },
+            { x: 3400, y: canvas.height - 600, width: 1000, height: 700 },
+        ];
+
+
+        let enemies = [
+            { x: 400, y: 500, width: 50, height: 50 },
+            { x: 850, y: 300, width: 50, height: 50 },
+
+            { x: 1350, y: 350, width: 50, height: 50 },
+            { x: 1650, y: 500, width: 50, height: 50 },
+
+            { x: 2920, y: 500, width: 50, height: 50 },
+            { x: 3040, y: 500, width: 50, height: 50 },
+            { x: 3160, y: 500, width: 50, height: 50 },
+            { x: 3280, y: 500, width: 50, height: 50 },
+            { x: 3400, y: 500, width: 50, height: 50 },
+        ]
+
+
+        let enemies2 = [
+            { x: 100, y: 320, width: 50, height: 50 }, 
+            { x: 1925, y: 200, width: 50, height: 50 },
+            { x: 2575, y: 200, width: 50, height: 50 },
+            { x: 3225, y: 200, width: 50, height: 50 },
+        ]
+
+
+
+
         function update() {
+            if (!gamePaused) {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Update camera position
     const cameraX = player.x - canvas.width / 2.4;
-    const cameraY = player.y - canvas.height / 1.65;
+    const cameraY = player.y - canvas.height / 1.75;
 
 
-
+if (levelNumber === 1) {
     if (player.y >= 1000 && player.x >= 900 && player.x <= 1400) {
         player.y = 500;
         player.x = 500
@@ -80,7 +180,7 @@
         player.y = 500;
         player.x = 1575
     }
-
+}
   
     player.x += player.speedX;
 
@@ -88,6 +188,7 @@
 
     // Apply gravity
     player.speedY += 0.5;
+
 
 
 
@@ -127,6 +228,55 @@ platforms.forEach(platform => {
 });
 
 
+
+// Check for collisions with enemies
+enemies.forEach(enemy => {
+    if (player.y + player.height > enemy.y &&
+        player.y < enemy.y + enemy.height &&
+        player.x + player.width > enemy.x &&
+        player.x < enemy.x + enemy.width) {
+
+        // Collision from top
+        if (player.speedY > 0 && player.y < enemy.y) {
+            player.speedY = -15;
+            enemies.splice(enemies.indexOf(enemy), 1);
+            player.y = enemy.y - player.height;
+            //
+        }
+
+        // Collision from bottom
+        else if (player.speedY < 0 && player.y + player.height > enemy.y + enemy.height) {
+            player.x = -500;
+            player.y = 500;
+        }
+
+
+        // Collision from left
+        else if (player.speedX > 0 && player.x < enemy.x) {
+            player.x = -500;
+            player.y = 500;
+        }
+
+        // Collision from right
+        else if (player.speedX < 0 && player.x > enemy.x) {
+            player.x = -500;
+            player.y = 500;
+        }
+    }
+});
+
+
+    // Check for collisions with goal
+    if (player.y + player.height > goal.y &&
+            player.y < goal.y + goal.height &&
+            player.x + player.width > goal.x &&
+            player.x < goal.x + goal.width) {
+            //Level 2 
+            completeLevel = true;
+            togglePauseMenu();
+            }
+
+
         // Draw player
             ctx.fillStyle = 'blue';
             ctx.fillRect(player.x - cameraX, player.y - cameraY, player.width, player.height);
@@ -136,6 +286,12 @@ platforms.forEach(platform => {
             ctx.fillStyle = 'yellow';
             ctx.fillRect(goal.x - cameraX, goal.y - cameraY, goal.width, goal.height);
 
+        // Draw enemies
+        enemies.forEach((enemy) => {
+            ctx.fillStyle = "purple";
+            ctx.fillRect(enemy.x - cameraX, enemy.y - cameraY, enemy.width, enemy.height);
+        })
+
 
 
         // Draw platforms      
@@ -143,14 +299,132 @@ platforms.forEach(platform => {
         // Change the color of the first platform
         if (index === 0) {
             ctx.fillStyle = 'green'; // Change the color of the first platform here
+        } else if (index === 1) {
+            ctx.fillStyle = 'white'; 
+        } else if (index === 18) {
+            ctx.fillStyle = 'white';
         } else {
             ctx.fillStyle = 'red'; // Default color for other platforms
         }
                 ctx.fillRect(platform.x - cameraX, platform.y - cameraY, platform.width, platform.height);
             });
+        }
 
             requestAnimationFrame(update);
         }
+
+
+
+        //PauseMenu open/close
+        function togglePauseMenu() {
+            const pauseMenu = document.querySelector('.pause-menu');
+            //const resumeButton = document.querySelector('.pause-menu button:nth-child(2)');
+            const nextLevelButton = document.querySelector('.pause-menu button:nth-child(4)');
+            
+    if (completeLevel) {
+       // resumeButton.style.display = 'none';
+        nextLevelButton.style.display = 'block'; // Show the button
+    } else {
+       // resumeButton.style.display = 'block';
+        nextLevelButton.style.display = 'none'; // Hide the button
+    }
+
+            if (gamePaused) {
+                pauseMenu.style.display = 'none';
+            } else {
+                pauseMenu.style.display = 'block';
+            }
+            gamePaused = !gamePaused;
+        }
+
+        function resumeGame() {
+            togglePauseMenu();
+        }
+
+
+        function restartGame() {
+            // Reset game state or reload the page
+             location.reload();
+        }
+        
+
+
+
+        
+        function levelGame() {
+            // Reset player position and other necessary changes for the next level
+            player.x = -500;
+            player.y = 500;
+            player.jumping = false;
+            player.speedY = 0;
+            
+
+            // Change platforms to platforms2
+            platforms = platforms2;
+            enemies = enemies2;
+            goal = goal2;
+
+            // Close the pause menu
+            togglePauseMenu();
+
+            // Reset completeLevel flag
+            completeLevel = false;
+            levelNumber = 2;
+
+            // Update the visibility of the next level button
+            const nextLevelButton = document.querySelector('.pause-menu button:nth-child(4)');
+            nextLevelButton.style.display = 'none';
+
+            // Redraw the canvas with the updated platforms
+            redrawCanvas();
+        }
+
+
+
+
+function redrawCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Update camera position
+    const cameraX = player.x - canvas.width / 2.4;
+    const cameraY = player.y - canvas.height / 1.75;
+
+
+
+    // Draw player
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(player.x - cameraX, player.y - cameraY, player.width, player.height);
+
+    // Draw goal
+    ctx.fillStyle = 'yellow';
+    ctx.fillRect(goal.x - cameraX, goal.y - cameraY, goal.width, goal.height);
+
+    // Draw enemies
+    enemies.forEach((enemy) => {
+        ctx.fillStyle = "purple";
+        ctx.fillRect(enemy.x - cameraX, enemy.y - cameraY, enemy.width, enemy.height);
+    })
+
+    // Draw platforms      
+    platforms.forEach((platform, index) => {
+        // Change the color of the first platform
+        if (index === 0) {
+            ctx.fillStyle = 'green'; // Change the color of the first platform here
+        } else if (index === 1) {
+            ctx.fillStyle = 'white'; 
+        } else if (index === 18) {
+            ctx.fillStyle = 'white';
+        } else {
+            ctx.fillStyle = 'red'; // Default color for other platforms
+        }
+        ctx.fillRect(platform.x - cameraX, platform.y - cameraY, platform.width, platform.height);
+    });
+}
+
+
+
+
+
 
 
         // Handle keyboard input
@@ -158,13 +432,14 @@ platforms.forEach(platform => {
             if (event.key === 'ArrowRight' || event.key === 'D' || event.key === 'd') {
                 player.speedX = 5;
             } else if (event.key === 'ArrowLeft' || event.key === 'A' || event.key === 'a') {
-                if (player.x <= -580){
-                    player.speedX = 0;
-                }
-                else {player.speedX = -5; }
+                player.speedX = -5; 
             } else if (event.key === 'ArrowUp' || event.key === 'W' || event.key === 'w' && !player.jumping) {
                 player.speedY = -15;
                 player.jumping = true;
+            }
+
+            if (event.key === 'Escape' || event.key === 'P' || event.key === 'p') {
+                togglePauseMenu();
             }
         });
 
